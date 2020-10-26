@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"notes/pkg/http/contract"
 	"notes/pkg/http/internal/util"
@@ -28,6 +29,10 @@ func (uh *UserHandler) CreateUser(resp http.ResponseWriter, req *http.Request) e
 	//TODO: WRITE SUCCESS LOG
 	util.WriteSuccessResponse(http.StatusCreated, contract.CreateUserResponse{Message: contract.UserCreationSuccess}, resp)
 	return nil
+}
+
+func (uh *UserHandler) LoginUser(resp http.ResponseWriter, req *http.Request) error {
+	return errors.New("UN IMPLEMENTED")
 }
 
 func NewUserHandler(svc user.Service) *UserHandler {

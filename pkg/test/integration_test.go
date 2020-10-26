@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"notes/pkg/app"
@@ -25,46 +26,66 @@ func TestAPI(t *testing.T) {
 	cl := &http.Client{Timeout: time.Minute}
 
 	testPing(t, cl)
-	testCreateUser(t, cl)
+	testUserAPI(t, cl)
 }
 
 func testPing(t *testing.T, cl *http.Client) {
-	res, err := cl.Get(fmt.Sprintf("%s/%s", address, "ping"))
-	require.NoError(t, err)
+	req := newRequest(t, http.MethodGet, "ping", nil)
+	resp := execRequest(t, cl, req)
+	verifyResponse(t, http.StatusOK, "pong", resp)
+}
 
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-
-	b, err := ioutil.ReadAll(res.Body)
-	require.NoError(t, err)
-
-	var data contract.APIResponse
-	err = json.Unmarshal(b, &data)
-	require.NoError(t, err)
-
-	assert.True(t, data.Success)
-	assert.Equal(t, "pong", data.Data)
+func testUserAPI(t *testing.T, cl *http.Client) {
+	testCreateUser(t, cl)
+	testLoginUser(t, cl)
 }
 
 func testCreateUser(t *testing.T, cl *http.Client) {
-	rd := contract.CreateUserRequest{Name: "test name", Email: "test@test.com", Password: "Password@1234"}
-
-	rqB, err := json.Marshal(&rd)
+	crq := contract.CreateUserRequest{Name: "test name", Email: "test@test.com", Password: "Password@1234"}
+	b, err := json.Marshal(&crq)
 	require.NoError(t, err)
 
-	res, err := cl.Post(fmt.Sprintf("%s/%s", address, "user/create"), "application/json", bytes.NewBuffer(rqB))
+	req := newRequest(t, http.MethodPost, "user/create", bytes.NewBuffer(b))
+	resp := execRequest(t, cl, req)
+	verifyResponse(t, http.StatusCreated, map[string]interface{}{"message": "user created successfully"}, resp)
+}
+
+func testLoginUser(t *testing.T, cl *http.Client) {
+	//lrq := contract.LoginUserRequest{Email: "test@test.com", Password: "Password@1234"}
+	//b, err := json.Marshal(&lrq)
+	//require.NoError(t, err)
+
+	//req := newRequest(t, http.MethodPost, "user/login", bytes.NewBuffer(b))
+	//resp := execRequest(t, cl, req)
+	//verifyResponse(t, http.StatusOK, nil, resp)
+}
+
+func execRequest(t *testing.T, cl *http.Client, req *http.Request) *http.Response {
+	resp, err := cl.Do(req)
 	require.NoError(t, err)
 
-	assert.Equal(t, http.StatusCreated, res.StatusCode)
+	return resp
+}
 
-	rpB, err := ioutil.ReadAll(res.Body)
+func verifyResponse(t *testing.T, expectedCode int, expectedData interface{}, resp *http.Response) {
+	assert.Equal(t, expectedCode, resp.StatusCode)
+
+	b, err := ioutil.ReadAll(resp.Body)
 	require.NoError(t, err)
 
-	var data contract.APIResponse
-	err = json.Unmarshal(rpB, &data)
+	var res contract.APIResponse
+	err = json.Unmarshal(b, &res)
 	require.NoError(t, err)
 
-	assert.True(t, data.Success)
-	assert.Equal(t, map[string]interface{}{"message": "user created successfully"}, data.Data)
+	assert.True(t, res.Success)
+	assert.Equal(t, expectedData, res.Data)
+}
+
+func newRequest(t *testing.T, method, path string, body io.Reader) *http.Request {
+	req, err := http.NewRequest(method, fmt.Sprintf("%s/%s", address, path), body)
+	require.NoError(t, err)
+
+	return req
 }
 
 func startApp() {

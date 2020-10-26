@@ -24,6 +24,9 @@ const (
 
 	createAPI  = "create"
 	createPath = "/create"
+
+	loginAPI  = "login"
+	loginPath = "/login"
 )
 
 func NewRouter(lgr *zap.Logger, prometheus reporters.Prometheus, userService user.Service) http.Handler {
@@ -51,6 +54,7 @@ func registerUserRoutes(r chi.Router, lgr *zap.Logger, prometheus reporters.Prom
 
 	r.Route(userPath, func(r chi.Router) {
 		r.Post(createPath, withMiddlewares(lgr, prometheus, apiFunc(createAPI), mdl.WithError(lgr, uh.CreateUser)))
+		r.Post(loginPath, withMiddlewares(lgr, prometheus, apiFunc(loginAPI), mdl.WithError(lgr, uh.LoginUser)))
 	})
 }
 

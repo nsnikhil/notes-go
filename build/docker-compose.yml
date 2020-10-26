@@ -18,7 +18,7 @@ services:
     ports:
       - 8432:5432
     volumes:
-      - ../pkg/store/migrations/:/docker-entrypoint-initdb.d/
+      - ../pkg/database/migrations/:/docker-entrypoint-initdb.d/
 
   prometheus:
     image: prom/prometheus:latest

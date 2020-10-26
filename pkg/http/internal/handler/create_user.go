@@ -2,7 +2,7 @@ package handler
 
 import (
 	"net/http"
-	"notes/pkg/http/internal/contract"
+	"notes/pkg/http/contract"
 	"notes/pkg/http/internal/util"
 	"notes/pkg/liberr"
 	"notes/pkg/user"

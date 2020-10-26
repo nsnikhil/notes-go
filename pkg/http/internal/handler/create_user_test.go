@@ -9,7 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"notes/pkg/http/internal/contract"
+	"notes/pkg/http/contract"
 	"notes/pkg/http/internal/handler"
 	mdl "notes/pkg/http/internal/middleware"
 	"notes/pkg/liberr"

@@ -11,11 +11,15 @@ HTTP_SERVE_COMMAND=http-serve
 MIGRATE_COMMAND=migrate
 ROLLBACK_COMMAND=rollback
 
-setup: copy-config init-db migrate test
+setup: copy-config init-db init-test-db migrate test
 
 init-db:
 	psql -c "create user notes_user superuser password 'notes_password';" -U postgres
 	psql -c "create database notes_db owner=notes_user" -U postgres
+
+init-test-db:
+	psql -c "create user notes_test_user superuser password 'notes_test_password';" -U postgres
+	psql -c "create database notes_test_db owner=notes_test_user" -U postgres
 
 deps:
 	go mod download

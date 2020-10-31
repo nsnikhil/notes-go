@@ -13,6 +13,7 @@ type Config struct {
 	databaseConfig   DatabaseConfig
 	logConfig        LogConfig
 	logFileConfig    LogFileConfig
+	userConfig       UserConfig
 }
 
 func (c Config) GRPCServerConfig() GRPCServerConfig {
@@ -43,6 +44,11 @@ func (c Config) MigrationPath() string {
 	return c.migrationPath
 }
 
+func (c Config) UserConfig() UserConfig {
+	return c.userConfig
+}
+
+//TODO: FIGURE OUT OF WAY TO KEEP ONE CONFIG FILE FOR LOCAL, DOCKER AND TEST
 func NewConfig(configFile string) Config {
 	viper.AutomaticEnv()
 	viper.SetConfigFile(configFile)
@@ -60,5 +66,6 @@ func NewConfig(configFile string) Config {
 		databaseConfig:   newDatabaseConfig(),
 		logConfig:        newLogConfig(),
 		logFileConfig:    newLogFileConfig(),
+		userConfig:       newUserConfig(),
 	}
 }

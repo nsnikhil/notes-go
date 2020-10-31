@@ -1,6 +1,7 @@
 package directory
 
 import (
+	"database/sql"
 	"notes/pkg/liberr"
 )
 
@@ -9,25 +10,29 @@ type Service interface {
 }
 
 type directoryService struct {
-	st Store
+	st store
 }
 
 func (ds *directoryService) CreateDirectory(name string) (string, error) {
-	dir, err := NewDirectory(name)
+	dir, err := newDirectory(name)
 	if err != nil {
-		return "", liberr.WithArgs(liberr.Operation("DirectoryService.CreateDirectory"), err)
+		return "", liberr.WithArgs(liberr.Operation("DirectoryService.createDirectory"), err)
 	}
 
-	id, err := ds.st.CreateDirectory(dir)
+	id, err := ds.st.createDirectory(dir)
 	if err != nil {
-		return "", liberr.WithArgs(liberr.Operation("DirectoryService.CreateDirectory"), err)
+		return "", liberr.WithArgs(liberr.Operation("DirectoryService.createDirectory"), err)
 	}
 
 	return id, nil
 }
 
-func NewDirectoryService(st Store) Service {
+func newDirectoryService(st store) Service {
 	return &directoryService{
 		st: st,
 	}
+}
+
+func NewDirectoryService(db *sql.DB) Service {
+	return newDirectoryService(newDirectoryStore(db))
 }

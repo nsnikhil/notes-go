@@ -1,11 +1,10 @@
-package directory_test
+package directory
 
 import (
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"notes/pkg/liberr"
-	"notes/pkg/notes/directory"
 	"testing"
 )
 
@@ -14,39 +13,39 @@ const (
 )
 
 func TestCreateNewDirectorySuccess(t *testing.T) {
-	st := &directory.MockDirectoryStore{}
-	st.On("CreateDirectory", mock.AnythingOfType("*directory.Directory")).Return(dirID, nil)
+	st := &mockDirectoryStore{}
+	st.On("createDirectory", mock.AnythingOfType("*directory.directory")).Return(dirID, nil)
 
-	testCreateNewDirectory(t, nil, "root", directory.NewDirectoryService(st))
+	testCreateNewDirectory(t, nil, "root", newDirectoryService(st))
 }
 
 func TestCreateNewDirectoryFailure(t *testing.T) {
 	testCases := map[string]struct {
-		svc           func() directory.Service
+		svc           func() Service
 		name          string
 		expectedError error
 	}{
 		"test failure when db fails to save": {
-			svc: func() directory.Service {
-				st := &directory.MockDirectoryStore{}
-				st.On("CreateDirectory", mock.AnythingOfType("*directory.Directory")).Return("", liberr.WithArgs(errors.New("failed to create new directory")))
+			svc: func() Service {
+				st := &mockDirectoryStore{}
+				st.On("createDirectory", mock.AnythingOfType("*directory.directory")).Return("", liberr.WithArgs(errors.New("failed to create new directory")))
 
-				return directory.NewDirectoryService(st)
+				return newDirectoryService(st)
 			},
 			name:          "root",
-			expectedError: liberr.WithArgs(liberr.Operation("DirectoryService.CreateDirectory"), liberr.WithArgs(errors.New("failed to create new directory"))),
+			expectedError: liberr.WithArgs(liberr.Operation("DirectoryService.createDirectory"), liberr.WithArgs(errors.New("failed to create new directory"))),
 		},
 		"test failure when name is invalid": {
-			svc: func() directory.Service {
-				st := &directory.MockDirectoryStore{}
-				st.On("CreateDirectory", mock.AnythingOfType("*directory.Directory")).Return(dirID, nil)
+			svc: func() Service {
+				st := &mockDirectoryStore{}
+				st.On("createDirectory", mock.AnythingOfType("*directory.directory")).Return(dirID, nil)
 
-				return directory.NewDirectoryService(st)
+				return newDirectoryService(st)
 			},
 			name: "",
 			expectedError: liberr.WithArgs(
-				liberr.Operation("DirectoryService.CreateDirectory"),
-				liberr.WithArgs(liberr.Operation("Directory.validate"), liberr.ValidationError, liberr.SeverityError,
+				liberr.Operation("DirectoryService.createDirectory"),
+				liberr.WithArgs(liberr.Operation("directory.validate"), liberr.ValidationError, liberr.SeverityError,
 					errors.New("directory name cannot be empty")),
 			),
 		},
@@ -59,7 +58,7 @@ func TestCreateNewDirectoryFailure(t *testing.T) {
 	}
 }
 
-func testCreateNewDirectory(t *testing.T, expectedError error, name string, svc directory.Service) {
+func testCreateNewDirectory(t *testing.T, expectedError error, name string, svc Service) {
 	_, err := svc.CreateDirectory(name)
 	assert.Equal(t, expectedError, err)
 }

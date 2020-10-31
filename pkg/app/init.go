@@ -37,23 +37,20 @@ func initRouter(lgr *zap.Logger, prometheus reporters.Prometheus, svc user.Servi
 }
 
 func initServices(cfg config.Config) user.Service {
-	ust, dst := initStores(cfg.DatabaseConfig())
-
-	dsv := directory.NewDirectoryService(dst)
-	usv := user.NewService(ust, dsv)
-
-	return usv
-}
-
-func initStores(cfg config.DatabaseConfig) (user.Store, directory.Store) {
-	dbh := database.NewHandler(cfg)
-
-	db, err := dbh.GetDB()
+	db, err := database.NewHandler(cfg.DatabaseConfig()).GetDB()
 	if err != nil {
-		log.Fatal(dbh)
+		log.Fatal(err)
 	}
 
-	return user.NewUserStore(db), directory.NewDirectoryStore(db)
+	uc := cfg.UserConfig()
+
+	dsv := directory.NewDirectoryService(db)
+	usv, err := user.NewService(dsv, db, uc.SaltLength(), uc.Iterations(), uc.KeyLength(), uc.PemString())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return usv
 }
 
 func initLogger(cfg config.Config) *zap.Logger {

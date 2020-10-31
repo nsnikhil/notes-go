@@ -9,26 +9,26 @@ const (
 	insertDirectory = `INSERT INTO directories (name) VALUES ($1) RETURNING id`
 )
 
-type Store interface {
-	CreateDirectory(directory *Directory) (string, error)
+type store interface {
+	createDirectory(directory *directory) (string, error)
 }
 
 type directoryStore struct {
 	db *sql.DB
 }
 
-func (ds *directoryStore) CreateDirectory(directory *Directory) (string, error) {
+func (ds *directoryStore) createDirectory(directory *directory) (string, error) {
 	var id string
 
-	err := ds.db.QueryRow(insertDirectory, directory.Name()).Scan(&id)
+	err := ds.db.QueryRow(insertDirectory, directory.name).Scan(&id)
 	if err != nil {
-		return "", liberr.WithArgs(liberr.Operation("DirectoryStore.CreateDirectory"), liberr.InternalError, liberr.SeverityError, err)
+		return "", liberr.WithArgs(liberr.Operation("DirectoryStore.createDirectory"), liberr.InternalError, liberr.SeverityError, err)
 	}
 
 	return id, nil
 }
 
-func NewDirectoryStore(db *sql.DB) Store {
+func newDirectoryStore(db *sql.DB) store {
 	return &directoryStore{
 		db: db,
 	}

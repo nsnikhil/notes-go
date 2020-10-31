@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"net/http"
 	"notes/pkg/http/contract"
 	"notes/pkg/http/internal/util"
@@ -20,8 +19,7 @@ func (uh *UserHandler) CreateUser(resp http.ResponseWriter, req *http.Request) e
 	}
 
 	//TODO: THINK IF THE VALIDATION SHOULD BE DELEGATED TO SVC LAYER ?
-
-	_, err := uh.svc.CreateUser(data.Name, data.Email, data.Password)
+	_, err := uh.svc.Create(data.Name, data.Email, data.Password)
 	if err != nil {
 		return liberr.WithArgs(liberr.Operation("UserHandler.CreateUser"), err)
 	}
@@ -32,7 +30,18 @@ func (uh *UserHandler) CreateUser(resp http.ResponseWriter, req *http.Request) e
 }
 
 func (uh *UserHandler) LoginUser(resp http.ResponseWriter, req *http.Request) error {
-	return errors.New("UN IMPLEMENTED")
+	var data contract.LoginUserRequest
+	if err := util.ParseRequest(req, &data); err != nil {
+		return liberr.WithArgs(liberr.Operation("UserHandler.LoginUser"), err)
+	}
+
+	at, rf, err := uh.svc.Login(data.Email, data.Password)
+	if err != nil {
+		return liberr.WithArgs(liberr.Operation("UserHandler.LoginUser"), err)
+	}
+
+	util.WriteSuccessResponse(http.StatusOK, contract.LoginUserResponse{AccessToken: at, RefreshToken: rf}, resp)
+	return nil
 }
 
 func NewUserHandler(svc user.Service) *UserHandler {

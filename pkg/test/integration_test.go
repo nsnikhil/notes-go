@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
 	"io/ioutil"
@@ -17,7 +16,13 @@ import (
 	"time"
 )
 
-const address = "http://127.0.0.1:8080"
+const (
+	name     = "Test Name"
+	email    = "test@test.com"
+	password = "Password@1234"
+
+	address = "http://127.0.0.1:8080"
+)
 
 func TestAPI(t *testing.T) {
 	startApp()
@@ -32,7 +37,11 @@ func TestAPI(t *testing.T) {
 func testPing(t *testing.T, cl *http.Client) {
 	req := newRequest(t, http.MethodGet, "ping", nil)
 	resp := execRequest(t, cl, req)
-	verifyResponse(t, http.StatusOK, "pong", resp)
+
+	responseData := getData(t, http.StatusOK, resp)
+	expectedData := contract.APIResponse{Success: true, Data: "pong"}
+
+	verifyData(t, expectedData, responseData)
 }
 
 func testUserAPI(t *testing.T, cl *http.Client) {
@@ -41,23 +50,32 @@ func testUserAPI(t *testing.T, cl *http.Client) {
 }
 
 func testCreateUser(t *testing.T, cl *http.Client) {
-	crq := contract.CreateUserRequest{Name: "test name", Email: "test@test.com", Password: "Password@1234"}
+	crq := contract.CreateUserRequest{Name: name, Email: email, Password: password}
 	b, err := json.Marshal(&crq)
 	require.NoError(t, err)
 
 	req := newRequest(t, http.MethodPost, "user/create", bytes.NewBuffer(b))
 	resp := execRequest(t, cl, req)
-	verifyResponse(t, http.StatusCreated, map[string]interface{}{"message": "user created successfully"}, resp)
+
+	responseData := getData(t, http.StatusCreated, resp)
+	expectedData := contract.APIResponse{Success: true, Data: map[string]interface{}{"message": "user created successfully"}}
+
+	verifyData(t, expectedData, responseData)
 }
 
 func testLoginUser(t *testing.T, cl *http.Client) {
-	//lrq := contract.LoginUserRequest{Email: "test@test.com", Password: "Password@1234"}
-	//b, err := json.Marshal(&lrq)
-	//require.NoError(t, err)
+	lrq := contract.LoginUserRequest{Email: email, Password: password}
+	b, err := json.Marshal(&lrq)
+	require.NoError(t, err)
 
-	//req := newRequest(t, http.MethodPost, "user/login", bytes.NewBuffer(b))
-	//resp := execRequest(t, cl, req)
-	//verifyResponse(t, http.StatusOK, nil, resp)
+	req := newRequest(t, http.MethodPost, "user/login", bytes.NewBuffer(b))
+	resp := execRequest(t, cl, req)
+
+	responseData := getData(t, http.StatusOK, resp)
+
+	require.True(t, responseData.Success)
+	require.True(t, len(responseData.Data.(map[string]interface{})["access_token"].(string)) != 0)
+	require.True(t, len(responseData.Data.(map[string]interface{})["refresh_token"].(string)) != 0)
 }
 
 func execRequest(t *testing.T, cl *http.Client, req *http.Request) *http.Response {
@@ -67,8 +85,8 @@ func execRequest(t *testing.T, cl *http.Client, req *http.Request) *http.Respons
 	return resp
 }
 
-func verifyResponse(t *testing.T, expectedCode int, expectedData interface{}, resp *http.Response) {
-	assert.Equal(t, expectedCode, resp.StatusCode)
+func getData(t *testing.T, expectedCode int, resp *http.Response) contract.APIResponse {
+	require.Equal(t, expectedCode, resp.StatusCode)
 
 	b, err := ioutil.ReadAll(resp.Body)
 	require.NoError(t, err)
@@ -77,8 +95,11 @@ func verifyResponse(t *testing.T, expectedCode int, expectedData interface{}, re
 	err = json.Unmarshal(b, &res)
 	require.NoError(t, err)
 
-	assert.True(t, res.Success)
-	assert.Equal(t, expectedData, res.Data)
+	return res
+}
+
+func verifyData(t *testing.T, expectedResponse contract.APIResponse, response contract.APIResponse) {
+	require.Equal(t, expectedResponse, response)
 }
 
 func newRequest(t *testing.T, method, path string, body io.Reader) *http.Request {

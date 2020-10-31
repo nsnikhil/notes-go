@@ -1,10 +1,9 @@
-package directory_test
+package directory
 
 import (
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"notes/pkg/liberr"
-	"notes/pkg/notes/directory"
 	"testing"
 )
 
@@ -15,13 +14,13 @@ func TestModelCreateNewDirectorySuccess(t *testing.T) {
 func TestModelCreateNewDirectoryFailure(t *testing.T) {
 	testModelCreateNewDirectorySuccess(t,
 		liberr.WithArgs(
-			liberr.Operation("Directory.validate"),
+			liberr.Operation("directory.validate"),
 			liberr.ValidationError,
 			errors.New("directory name cannot be empty"),
 		), "")
 }
 
 func testModelCreateNewDirectorySuccess(t *testing.T, expectedError error, name string) {
-	_, err := directory.NewDirectory(name)
+	_, err := newDirectory(name)
 	assert.Equal(t, expectedError, err)
 }

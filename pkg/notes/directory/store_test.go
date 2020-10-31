@@ -1,11 +1,10 @@
-package directory_test
+package directory
 
 import (
 	"database/sql"
 	"errors"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
-	"notes/pkg/notes/directory"
 	"regexp"
 	"testing"
 )
@@ -21,9 +20,9 @@ func TestDirectoryStoreCreateDirectorySuccess(t *testing.T) {
 		WithArgs(dirName).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(dirID))
 
-	ds := directory.NewDirectoryStore(db)
+	ds := newDirectoryStore(db)
 
-	_, err := ds.CreateDirectory(getDirectory(t, dirName))
+	_, err := ds.createDirectory(getDirectory(t, dirName))
 	require.NoError(t, err)
 
 	require.NoError(t, mock.ExpectationsWereMet())
@@ -40,16 +39,16 @@ func TestDirectoryStoreCreateDirectoryFailure(t *testing.T) {
 		WithArgs(dirName).
 		WillReturnError(errors.New("failed to create new directory"))
 
-	ds := directory.NewDirectoryStore(db)
+	ds := newDirectoryStore(db)
 
-	_, err := ds.CreateDirectory(getDirectory(t, dirName))
+	_, err := ds.createDirectory(getDirectory(t, dirName))
 	require.Error(t, err)
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func getDirectory(t *testing.T, name string) *directory.Directory {
-	dir, err := directory.NewDirectory(name)
+func getDirectory(t *testing.T, name string) *directory {
+	dir, err := newDirectory(name)
 	require.NoError(t, err)
 
 	return dir

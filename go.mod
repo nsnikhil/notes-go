@@ -4,8 +4,11 @@ go 1.15
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/golang-migrate/migrate/v4 v4.13.0
+	github.com/google/uuid v1.1.1
 	github.com/lib/pq v1.8.0
 	github.com/magiconair/properties v1.8.1
 	github.com/prometheus/client_golang v1.8.0

@@ -1,25 +1,22 @@
 package user
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	"golang.org/x/crypto/pbkdf2"
-	"golang.org/x/crypto/sha3"
-	"io"
 	"notes/pkg/liberr"
 	"regexp"
 	"time"
 	"unicode"
 )
 
-type User struct {
+type user struct {
 	id string
 
-	name     string
-	email    string
-	password string
+	name  string
+	email string
+
+	passwordHash string
+	passwordSalt []byte
 
 	rootDirID string
 
@@ -27,17 +24,22 @@ type User struct {
 	updatedAt time.Time
 }
 
-type Builder struct {
-	*User
-	err error
-	op  string
+// TODO: IS THIS REALLY NEEDED ?
+type builder struct {
+	user           *user
+	passwordHasher *passwordHasher
+	err            error
+	op             string
 }
 
-func NewBuilder() *Builder {
-	return &Builder{User: &User{}}
+func newBuilder(passwordHasher *passwordHasher) *builder {
+	return &builder{
+		user:           &user{},
+		passwordHasher: passwordHasher,
+	}
 }
 
-func (b *Builder) ID(id string) *Builder {
+func (b *builder) id(id string) *builder {
 	if b.err != nil {
 		return b
 	}
@@ -54,11 +56,11 @@ func (b *Builder) ID(id string) *Builder {
 		return b
 	}
 
-	b.id = id
+	b.user.id = id
 	return b
 }
 
-func (b *Builder) Name(name string) *Builder {
+func (b *builder) name(name string) *builder {
 	if b.err != nil {
 		return b
 	}
@@ -69,11 +71,11 @@ func (b *Builder) Name(name string) *Builder {
 		return b
 	}
 
-	b.name = name
+	b.user.name = name
 	return b
 }
 
-func (b *Builder) Email(email string) *Builder {
+func (b *builder) email(email string) *builder {
 	if b.err != nil {
 		return b
 	}
@@ -84,11 +86,11 @@ func (b *Builder) Email(email string) *Builder {
 		return b
 	}
 
-	b.email = email
+	b.user.email = email
 	return b
 }
 
-func (b *Builder) Password(password string) *Builder {
+func (b *builder) password(password string) *builder {
 	if b.err != nil {
 		return b
 	}
@@ -105,11 +107,15 @@ func (b *Builder) Password(password string) *Builder {
 		return b
 	}
 
-	b.password = password
+	salt, key := b.passwordHasher.toSalt(password)
+	hash := b.passwordHasher.encodeSalt(key)
+
+	b.user.passwordSalt = salt
+	b.user.passwordHash = hash
 	return b
 }
 
-func (b *Builder) RootDirID(rootDirID string) *Builder {
+func (b *builder) rootDirID(rootDirID string) *builder {
 	if b.err != nil {
 		return b
 	}
@@ -126,46 +132,34 @@ func (b *Builder) RootDirID(rootDirID string) *Builder {
 		return b
 	}
 
-	b.rootDirID = rootDirID
+	b.user.rootDirID = rootDirID
 	return b
 }
 
-func (b *Builder) CreatedAt(createdAt time.Time) *Builder {
+func (b *builder) createdAt(createdAt time.Time) *builder {
 	if b.err != nil {
 		return b
 	}
 
-	b.createdAt = createdAt
+	b.user.createdAt = createdAt
 	return b
 }
 
-func (b *Builder) UpdatedAt(updatedAt time.Time) *Builder {
+func (b *builder) updatedAt(updatedAt time.Time) *builder {
 	if b.err != nil {
 		return b
 	}
 
-	b.updatedAt = updatedAt
+	b.user.updatedAt = updatedAt
 	return b
 }
 
-func (b *Builder) Build() (*User, error) {
+func (b *builder) build() (*user, error) {
 	if b.err != nil {
-		return nil, liberr.WithArgs(liberr.Operation(fmt.Sprintf("Builder.%s", b.op)), liberr.ValidationError, b.err)
+		return nil, liberr.WithArgs(liberr.Operation(fmt.Sprintf("builder.%s", b.op)), liberr.ValidationError, b.err)
 	}
 
-	return b.User, nil
-}
-
-//TODO: USE THIS
-func encode(password string) string {
-	salt := make([]byte, 84)
-	_, err := io.ReadFull(rand.Reader, salt)
-	if err != nil {
-		return password
-	}
-
-	dk := pbkdf2.Key([]byte(password), salt, 4096, 32, sha3.New512)
-	return base64.StdEncoding.EncodeToString(dk)
+	return b.user, nil
 }
 
 func isValidUUID(uuid string) bool {

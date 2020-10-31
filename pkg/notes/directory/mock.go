@@ -11,11 +11,11 @@ func (mock *MockDirectoryService) CreateDirectory(name string) (string, error) {
 	return args.String(0), args.Error(1)
 }
 
-type MockDirectoryStore struct {
+type mockDirectoryStore struct {
 	mock.Mock
 }
 
-func (mock *MockDirectoryStore) CreateDirectory(directory *Directory) (string, error) {
+func (mock *mockDirectoryStore) createDirectory(directory *directory) (string, error) {
 	args := mock.Called(directory)
 	return args.String(0), args.Error(1)
 }

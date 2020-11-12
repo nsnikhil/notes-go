@@ -2,8 +2,8 @@ package directory
 
 import (
 	"errors"
+	"notes/pkg/document"
 	"notes/pkg/liberr"
-	"notes/pkg/notes/document"
 	"time"
 )
 

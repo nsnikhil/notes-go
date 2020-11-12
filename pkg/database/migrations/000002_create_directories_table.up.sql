@@ -1,5 +1,6 @@
 create table if not exists directories (
     id uuid primary key default gen_random_uuid(),
+    userid uuid not null,
     name  varchar(100) not null,
     parentid uuid,
     directoriesid uuid[],

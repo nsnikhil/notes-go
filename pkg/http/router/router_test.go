@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"notes/pkg/http/router"
 	reporters "notes/pkg/reporting"
-	"notes/pkg/user"
 	"testing"
 )
 
@@ -16,7 +15,6 @@ func TestRouter(t *testing.T) {
 	r := router.NewRouter(
 		zap.NewNop(),
 		&reporters.MockPrometheus{},
-		&user.MockUserService{},
 	)
 
 	rf := func(method, path string) *http.Request {
@@ -31,12 +29,6 @@ func TestRouter(t *testing.T) {
 	}{
 		"test ping route": {
 			request: rf(http.MethodGet, "/ping"),
-		},
-		"test create user route": {
-			request: rf(http.MethodPost, "/user/create"),
-		},
-		"test login user route": {
-			request: rf(http.MethodPost, "/user/login"),
 		},
 	}
 

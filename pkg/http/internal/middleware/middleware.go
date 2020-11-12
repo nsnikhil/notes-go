@@ -46,7 +46,17 @@ func WithReqRespLog(lgr *zap.Logger, handler http.HandlerFunc) http.HandlerFunc 
 
 func WithResponseHeaders(handler http.HandlerFunc) http.HandlerFunc {
 	return func(resp http.ResponseWriter, req *http.Request) {
-		resp.Header().Set("Content-Type", "application/json")
+		headers := map[string]string{
+			"Content-Type":              "application/json",
+			"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+			"X-Frame-Options":           "deny",
+			"X-Content-Type-Options":    "nosniff",
+		}
+
+		for key, value := range headers {
+			resp.Header().Set(key, value)
+		}
+
 		handler(resp, req)
 	}
 }
